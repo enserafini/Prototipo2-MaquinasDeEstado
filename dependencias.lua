@@ -1,3 +1,9 @@
-Class = require "lib.class"
+local sti = require("lib.sti")
+local bump = require("lib.bump")
+local Camera = require("lib.camera")
 
-require "jugador"
+return {
+    sti = sti,
+    bump = bump,
+    Camera = Camera
+}
