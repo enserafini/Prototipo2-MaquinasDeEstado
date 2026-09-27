@@ -3,36 +3,17 @@ local Enemigo = require("enemigos.enemigo")
 local Caballero = setmetatable({}, {__index = Enemigo})
 Caballero.__index = Caballero
 
-function Caballero:new(x, y, grande)
-    local ancho = 16
-    local alto = 16
-    local velocidad = 40
-    local vida = 110
-    local daño = 30
-
-    if grande then
-        ancho = 32
-        alto = 32
-        velocidad = 45
-        vida = 200
-        daño = 45
-    end
-
+function Caballero:new(x, y, sala, velocidad, vida, daño, escala)
     local enemigo = Enemigo:new(
-        x,
-        y,
-        ancho,
-        alto,
-        velocidad,
-        vida,
-        daño,
+        x, y, sala,
         "img/Caballero.png",
-        3
+        velocidad or 32,
+        vida or 140,
+        daño or 18,
+        escala or 1
     )
 
     setmetatable(enemigo, Caballero)
-
-    enemigo.activo = false
 
     return enemigo
 end
