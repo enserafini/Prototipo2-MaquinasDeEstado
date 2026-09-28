@@ -1,10 +1,10 @@
-local MaquinaEstado = require("MaquinaEstado")
+local MaquinaEstado = require("maquinaEstados")
 local Sonidos = require("sonidos")
 
-local EstadoTitulo = require("estados.EstadoTitulo")
-local EstadoJugar = require("estados.EstadoJugar")
-local EstadoVictoria = require("estados.EstadoVictoria")
-local EstadoDerrota = require("estados.EstadoDerrota")
+local EstadoTitulo = require("estados.estadoTitulo")
+local EstadoJugar = require("estados.estadoJugar")
+local EstadoVictoria = require("estados.estadoVictoria")
+local EstadoDerrota = require("estados.estadoDerrota")
 
 local maquina
 
