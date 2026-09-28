@@ -1,3 +1,5 @@
+local Sonidos = require("sonidos")
+
 local Enemigo = {}
 Enemigo.__index = Enemigo
 
@@ -9,28 +11,22 @@ function Enemigo:new(x, y, sala, imagen, velocidad, vida, daño, escala)
     enemigo.ancho = 16
     enemigo.alto = 16
     enemigo.velocidad = velocidad
-
     enemigo.vida = vida
     enemigo.vidaMaxima = vida
     enemigo.daño = daño
     enemigo.escala = escala or 1
-
     enemigo.sala = sala
     enemigo.activo = false
     enemigo.vivo = true
-
     enemigo.distanciaAtaque = 22
     enemigo.tiempoEntreAtaques = 0
     enemigo.retrasoAtaque = 0.9
-
     enemigo.atacando = false
     enemigo.tiempoAtaque = 0
     enemigo.duracionAtaque = 0.45
-
     enemigo.muriendo = false
     enemigo.tiempoMuerte = 0
     enemigo.duracionMuerte = 0.6
-
     enemigo.direccion = "abajo"
     enemigo.animacion = "quieto"
     enemigo.frame = 1
@@ -39,6 +35,9 @@ function Enemigo:new(x, y, sala, imagen, velocidad, vida, daño, escala)
 
     enemigo.imagen = love.graphics.newImage(imagen)
     enemigo.imagen:setFilter("nearest", "nearest")
+
+    enemigo.sonidoAtaque = Sonidos:cargarEfecto("ataqueEnemigo")
+    enemigo.sonidoMuerte = Sonidos:cargarEfecto("muerteEnemigo")
 
     enemigo.quads = {}
     enemigo:crearAnimaciones()
@@ -54,46 +53,25 @@ function Enemigo:crearAnimaciones()
         derecha = 4
     }
 
-    -- cada quad representa un frame de la animacion
     for nombre, fila in pairs(filas) do
         self.quads[nombre] = {}
 
         for i = 1, 4 do
-            self.quads[nombre][i] = love.graphics.newQuad(
-                (i - 1) * 16,
-                (fila - 1) * 16,
-                16,
-                16,
-                self.imagen:getWidth(),
-                self.imagen:getHeight()
-            )
+            self.quads[nombre][i] = love.graphics.newQuad((i - 1) * 16, (fila - 1) * 16, 16, 16, self.imagen:getWidth(), self.imagen:getHeight())
         end
     end
 
+    -- guarda los frames de ataque y muerte del sprite
     self.quads.ataque = {}
 
     for i = 1, 6 do
-        self.quads.ataque[i] = love.graphics.newQuad(
-            (i - 1) * 16,
-            4 * 16,
-            16,
-            16,
-            self.imagen:getWidth(),
-            self.imagen:getHeight()
-        )
+        self.quads.ataque[i] = love.graphics.newQuad((i - 1) * 16, 4 * 16, 16, 16, self.imagen:getWidth(), self.imagen:getHeight())
     end
 
     self.quads.muerte = {}
 
     for i = 1, 6 do
-        self.quads.muerte[i] = love.graphics.newQuad(
-            (i - 1) * 16,
-            5 * 16,
-            16,
-            16,
-            self.imagen:getWidth(),
-            self.imagen:getHeight()
-        )
+        self.quads.muerte[i] = love.graphics.newQuad((i - 1) * 16, 5 * 16, 16, 16, self.imagen:getWidth(), self.imagen:getHeight())
     end
 end
 
@@ -140,7 +118,6 @@ function Enemigo:update(dt, mundo, jugador)
 
     self:actualizarDireccion(dx, dy)
 
-    -- cuando esta cerca del jugador deja de moverse y empieza a atacar
     if distancia <= self.distanciaAtaque then
         self.animacion = "quieto"
         self.frame = 1
@@ -191,6 +168,11 @@ function Enemigo:atacar()
     self.animacion = "ataque"
     self.frame = 1
     self.tiempoAtaque = 0
+
+    if self.sonidoAtaque then
+        self.sonidoAtaque:stop()
+        self.sonidoAtaque:play()
+    end
 end
 
 function Enemigo:actualizarAtaque(dt, jugador)
@@ -203,7 +185,6 @@ function Enemigo:actualizarAtaque(dt, jugador)
         self.frame = 6
     end
 
-    -- el daño se aplica una sola vez durante el ataque
     if self.tiempoAtaque >= self.duracionAtaque * 0.45 and not self.yaHizoDaño then
         self.yaHizoDaño = true
 
@@ -241,6 +222,11 @@ function Enemigo:recibirDaño(daño)
         self.animacion = "muerte"
         self.frame = 1
         self.tiempoMuerte = 0
+
+        if self.sonidoMuerte then
+            self.sonidoMuerte:stop()
+            self.sonidoMuerte:play()
+        end
     end
 end
 
@@ -274,17 +260,7 @@ function Enemigo:draw()
         return
     end
 
-    love.graphics.draw(
-        self.imagen,
-        quad,
-        self.x + 8,
-        self.y + 8,
-        0,
-        self.escala,
-        self.escala,
-        8,
-        8
-    )
+    love.graphics.draw(self.imagen, quad, self.x + 8, self.y + 8, 0, self.escala, self.escala, 8, 8)
 end
 
 return Enemigo

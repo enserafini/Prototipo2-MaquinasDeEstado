@@ -1,3 +1,5 @@
+local Sonidos = require("sonidos")
+
 local Jugador = {}
 Jugador.__index = Jugador
 
@@ -55,39 +57,15 @@ function Jugador:crearAnimaciones()
         derecha = 4
     }
 
-    -- cada fila de la imagen corresponde a una direccion
     for nombre, fila in pairs(filas) do
         for i = 1, 4 do
-            self.quads[nombre][i] = love.graphics.newQuad(
-                (i - 1) * 16,
-                (fila - 1) * 16,
-                16,
-                16,
-                self.imagen:getWidth(),
-                self.imagen:getHeight()
-            )
+            self.quads[nombre][i] = love.graphics.newQuad((i - 1) * 16, (fila - 1) * 16, 16, 16, self.imagen:getWidth(), self.imagen:getHeight())
         end
     end
 
-    -- las ultimas dos filas son para ataque y muerte
     for i = 1, 6 do
-        self.quads.ataque[i] = love.graphics.newQuad(
-            (i - 1) * 16,
-            4 * 16,
-            16,
-            16,
-            self.imagen:getWidth(),
-            self.imagen:getHeight()
-        )
-
-        self.quads.muerte[i] = love.graphics.newQuad(
-            (i - 1) * 16,
-            5 * 16,
-            16,
-            16,
-            self.imagen:getWidth(),
-            self.imagen:getHeight()
-        )
+        self.quads.ataque[i] = love.graphics.newQuad((i - 1) * 16, 4 * 16, 16, 16, self.imagen:getWidth(), self.imagen:getHeight())
+        self.quads.muerte[i] = love.graphics.newQuad((i - 1) * 16, 5 * 16, 16, 16, self.imagen:getWidth(), self.imagen:getHeight())
     end
 end
 
@@ -133,8 +111,8 @@ function Jugador:update(dt, mundo)
     end
 
     if dx ~= 0 or dy ~= 0 then
-        -- normaliza el movimiento para que diagonal no sea mas rapido
         local distancia = math.sqrt(dx * dx + dy * dy)
+
         dx = dx / distancia
         dy = dy / distancia
 
@@ -182,6 +160,8 @@ function Jugador:atacar()
     self.atacando = true
     self.tiempoAtaque = 0
     self.frame = 1
+
+    Sonidos.reproducirEfecto(Sonidos.ataqueJugador)
 end
 
 function Jugador:actualizarAtaque(dt)
@@ -215,10 +195,11 @@ function Jugador:recibirDaño(daño)
         self.atacando = false
         self.tiempoMuerte = 0
         self.frame = 1
+
+        Sonidos.reproducirEfecto(Sonidos.muerteJugador)
         return
     end
 
-    -- evita recibir varios golpes seguidos sin tiempo para reaccionar
     self.tiempoInvulnerable = self.duracionInvulnerable
 end
 
@@ -258,17 +239,7 @@ function Jugador:draw()
         return
     end
 
-    love.graphics.draw(
-        self.imagen,
-        quad,
-        self.x + 8,
-        self.y + 8,
-        rotacion,
-        escalaX,
-        1,
-        8,
-        8
-    )
+    love.graphics.draw(self.imagen, quad, self.x + 8, self.y + 8, rotacion, escalaX, 1, 8, 8)
 end
 
 return Jugador
