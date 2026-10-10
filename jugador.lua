@@ -1,5 +1,4 @@
 
-local Sonidos = require("sonidos")
 local Eventos = require("eventos")
 
 local Jugador = {}
@@ -163,7 +162,7 @@ function Jugador:atacar()
     self.tiempoAtaque = 0
     self.frame = 1
 
-    Sonidos.reproducirEfecto(Sonidos.ataqueJugador)
+    Eventos.emitir("jugador_ataco")
 end
 
 function Jugador:actualizarAtaque(dt)
@@ -203,7 +202,7 @@ function Jugador:recibirDaño(daño)
         self.tiempoMuerte = 0
         self.frame = 1
 
-        Sonidos.reproducirEfecto(Sonidos.muerteJugador)
+        Eventos.emitir("jugador_murio")
         return
     end
 

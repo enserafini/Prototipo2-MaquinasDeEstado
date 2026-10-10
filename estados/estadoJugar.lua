@@ -1,4 +1,3 @@
-
 local sti = require("lib.sti")
 local bump = require("lib.bump")
 local Camera = require("lib.camera")
@@ -26,9 +25,15 @@ function EstadoJugar:new(maquina, ventana)
     estado.camara = nil
     estado.enemigos = {}
     estado.salasCompletadas = {}
-    estado.bossesMuertos = 0
     estado.interfaz = Interfaz:new()
     estado.salaAnterior = nil
+
+    Eventos.on("jefe_derrotado", function()
+        if estado.jugador then
+            estado.jugador.vida = estado.jugador.vidaMaxima
+            Eventos.emitir("vida_actualizada", estado.jugador.vida, estado.jugador.vidaMaxima)
+        end
+    end)
 
     return estado
 end
@@ -42,7 +47,6 @@ function EstadoJugar:entrar()
 
     self.enemigos = {}
     self.salasCompletadas = {}
-    self.bossesMuertos = 0
     self.salaAnterior = nil
 
     self.interfaz:reiniciar()
@@ -181,18 +185,7 @@ function EstadoJugar:verificarBosses()
         return false
     end
 
-    local muertos = totalBosses - bossesVivos
-
-    if muertos > self.bossesMuertos then
-        self.bossesMuertos = muertos
-        self.jugador.vida = self.jugador.vidaMaxima
-        Eventos.emitir("vida_actualizada", self.jugador.vida, self.jugador.vidaMaxima)
-    end
-
     if bossesVivos == 0 then
-        self.jugador.vida = self.jugador.vidaMaxima
-        Eventos.emitir("vida_actualizada", self.jugador.vida, self.jugador.vidaMaxima)
-
         self.jugador.vivo = true
         self.jugador.muriendo = false
         self.jugador.atacando = false

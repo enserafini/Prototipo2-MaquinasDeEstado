@@ -1,5 +1,4 @@
 
-local Sonidos = require("sonidos")
 local Eventos = require("eventos")
 
 local Enemigo = {}
@@ -37,9 +36,6 @@ function Enemigo:new(x, y, sala, imagen, velocidad, vida, daño, escala)
 
     enemigo.imagen = love.graphics.newImage(imagen)
     enemigo.imagen:setFilter("nearest", "nearest")
-
-    enemigo.sonidoAtaque = Sonidos:cargarEfecto("ataqueEnemigo")
-    enemigo.sonidoMuerte = Sonidos:cargarEfecto("muerteEnemigo")
 
     enemigo.quads = {}
     enemigo:crearAnimaciones()
@@ -172,10 +168,7 @@ function Enemigo:atacar()
     self.tiempoAtaque = 0
     self.yaHizoDaño = false
 
-    if self.sonidoAtaque then
-        self.sonidoAtaque:stop()
-        self.sonidoAtaque:play()
-    end
+    Eventos.emitir("enemigo_ataco", self)
 end
 
 function Enemigo:actualizarAtaque(dt, jugador)
@@ -230,11 +223,6 @@ function Enemigo:recibirDaño(daño)
 
         if self.sala == 4 then
             Eventos.emitir("jefe_derrotado", self)
-        end
-
-        if self.sonidoMuerte then
-            self.sonidoMuerte:stop()
-            self.sonidoMuerte:play()
         end
     end
 end
