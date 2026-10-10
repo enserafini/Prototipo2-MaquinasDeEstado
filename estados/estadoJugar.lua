@@ -1,8 +1,11 @@
+
 local sti = require("lib.sti")
 local bump = require("lib.bump")
 local Camera = require("lib.camera")
 
 local Sonidos = require("sonidos")
+local Eventos = require("eventos")
+local Interfaz = require("interfaz")
 
 local Jugador = require("jugador")
 local Esqueleto = require("enemigos.esqueleto")
@@ -24,6 +27,8 @@ function EstadoJugar:new(maquina, ventana)
     estado.enemigos = {}
     estado.salasCompletadas = {}
     estado.bossesMuertos = 0
+    estado.interfaz = Interfaz:new()
+    estado.salaAnterior = nil
 
     return estado
 end
@@ -38,10 +43,19 @@ function EstadoJugar:entrar()
     self.enemigos = {}
     self.salasCompletadas = {}
     self.bossesMuertos = 0
+    self.salaAnterior = nil
+
+    self.interfaz:reiniciar()
 
     self:crearParedes()
     self:crearJugador()
     self:crearEnemigos()
+
+    Eventos.emitir("vida_actualizada", self.jugador.vida, self.jugador.vidaMaxima)
+
+    local sala = self:obtenerSalaJugador()
+    self.salaAnterior = sala
+    Eventos.emitir("sala_actualizada", sala, 4)
 
     self.camara = Camera(self.jugador.x + self.jugador.ancho / 2, self.jugador.y + self.jugador.alto / 2, 4)
 end
@@ -145,6 +159,7 @@ function EstadoJugar:verificarSala(sala)
     if hayEnemigos then
         self.jugador.vida = self.jugador.vidaMaxima
         self.salasCompletadas[sala] = true
+        Eventos.emitir("vida_actualizada", self.jugador.vida, self.jugador.vidaMaxima)
     end
 end
 
@@ -171,10 +186,13 @@ function EstadoJugar:verificarBosses()
     if muertos > self.bossesMuertos then
         self.bossesMuertos = muertos
         self.jugador.vida = self.jugador.vidaMaxima
+        Eventos.emitir("vida_actualizada", self.jugador.vida, self.jugador.vidaMaxima)
     end
 
     if bossesVivos == 0 then
         self.jugador.vida = self.jugador.vidaMaxima
+        Eventos.emitir("vida_actualizada", self.jugador.vida, self.jugador.vidaMaxima)
+
         self.jugador.vivo = true
         self.jugador.muriendo = false
         self.jugador.atacando = false
@@ -210,6 +228,11 @@ function EstadoJugar:update(dt)
 
     local sala = self:obtenerSalaJugador()
 
+    if sala ~= self.salaAnterior then
+        self.salaAnterior = sala
+        Eventos.emitir("sala_actualizada", sala, 4)
+    end
+
     for _, enemigo in ipairs(self.enemigos) do
         if enemigo.vivo then
             enemigo.activo = enemigo.sala == sala
@@ -231,10 +254,7 @@ function EstadoJugar:update(dt)
         return
     end
 
-    self.camara:lookAt(
-        math.floor(self.jugador.x + self.jugador.ancho / 2 + 0.5),
-        math.floor(self.jugador.y + self.jugador.alto / 2 + 0.5)
-    )
+    self.camara:lookAt(math.floor(self.jugador.x + self.jugador.ancho / 2 + 0.5), math.floor(self.jugador.y + self.jugador.alto / 2 + 0.5))
 
     self:limitarCamara()
 end
@@ -302,57 +322,6 @@ function EstadoJugar:dibujarMapa()
     end
 end
 
-function EstadoJugar:dibujarInterfaz()
-    local x = 8
-    local y = 5
-    local anchoBarra = 150
-    local altoBarra = 16
-
-    local porcentaje = self.jugador.vida / self.jugador.vidaMaxima
-
-    if porcentaje < 0 then
-        porcentaje = 0
-    end
-
-    if porcentaje > 1 then
-        porcentaje = 1
-    end
-
-    local fuente = love.graphics.newFont("fuentes/font.ttf", 11)
-    love.graphics.setFont(fuente)
-
-    love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.print("BARRA DE VIDA", x, y)
-
-    love.graphics.setColor(0.05, 0.05, 0.05, 1)
-    love.graphics.rectangle("fill", x - 2, y + 14, anchoBarra + 4, altoBarra + 4)
-
-    love.graphics.setColor(0.15, 0.15, 0.15, 1)
-    love.graphics.rectangle("fill", x, y + 16, anchoBarra, altoBarra)
-
-    love.graphics.setColor(0.75, 0.08, 0.08, 1)
-    love.graphics.rectangle("fill", x, y + 16, anchoBarra * porcentaje, altoBarra)
-
-    love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y + 16, anchoBarra, altoBarra)
-
-    love.graphics.setColor(1, 1, 1, 1)
-
-    local textoVida = math.floor(self.jugador.vida) .. " / " .. self.jugador.vidaMaxima
-    local anchoTexto = fuente:getWidth(textoVida)
-    local altoTexto = fuente:getHeight()
-
-    love.graphics.print(
-        textoVida,
-        x + anchoBarra / 2 - anchoTexto / 2,
-        y + 16 + altoBarra / 2 - altoTexto / 2
-    )
-
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.setLineWidth(1)
-end
-
 function EstadoJugar:draw()
     self.camara:attach(0, 0, love.graphics.getWidth(), love.graphics.getHeight())
 
@@ -364,7 +333,7 @@ function EstadoJugar:draw()
     end
 
     self.camara:detach()
-    self:dibujarInterfaz()
+    self.interfaz:dibujar()
 end
 
 function EstadoJugar:salir()

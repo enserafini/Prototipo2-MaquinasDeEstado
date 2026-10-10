@@ -1,4 +1,6 @@
+
 local Sonidos = require("sonidos")
+local Eventos = require("eventos")
 
 local Enemigo = {}
 Enemigo.__index = Enemigo
@@ -168,6 +170,7 @@ function Enemigo:atacar()
     self.animacion = "ataque"
     self.frame = 1
     self.tiempoAtaque = 0
+    self.yaHizoDaño = false
 
     if self.sonidoAtaque then
         self.sonidoAtaque:stop()
@@ -222,6 +225,12 @@ function Enemigo:recibirDaño(daño)
         self.animacion = "muerte"
         self.frame = 1
         self.tiempoMuerte = 0
+
+        Eventos.emitir("enemigo_derrotado", self)
+
+        if self.sala == 4 then
+            Eventos.emitir("jefe_derrotado", self)
+        end
 
         if self.sonidoMuerte then
             self.sonidoMuerte:stop()

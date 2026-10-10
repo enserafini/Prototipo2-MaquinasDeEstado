@@ -1,4 +1,6 @@
+
 local Sonidos = require("sonidos")
+local Eventos = require("eventos")
 
 local Jugador = {}
 Jugador.__index = Jugador
@@ -188,8 +190,13 @@ function Jugador:recibirDaño(daño)
 
     self.vida = self.vida - daño
 
-    if self.vida <= 0 then
+    if self.vida < 0 then
         self.vida = 0
+    end
+
+    Eventos.emitir("vida_actualizada", self.vida, self.vidaMaxima)
+
+    if self.vida <= 0 then
         self.vivo = false
         self.muriendo = true
         self.atacando = false
